@@ -1,12 +1,41 @@
+# Python virtual environments
 .venv/
+venv/
+ENV/
+env/
+
+# Python bytecode and caches
 __pycache__/
+*.py[cod]
+*$py.class
 .pytest_cache/
+.ruff_cache/
+
+# Node & Frontend dependencies and build outputs
+node_modules/
 frontend/node_modules/
 frontend/dist/
+
+# Runtime data and user uploads (exclude generated SQLite DB and uploaded media)
 data/*
 !data/.gitkeep
+
+# Machine learning models: ignore backup and experimental candidate checkpoints,
+# but include the verified production inference model.
 models/*
 !models/.gitkeep
-.env
+
+# Training runs and experiment outputs
 runs/
+
+# Environment variables and sensitive secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Temporary files, logs, and OS files
+*.log
 .DS_Store
+Thumbs.db

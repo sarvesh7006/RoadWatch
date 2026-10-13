@@ -1,9 +1,14 @@
 .venv
 .git
-data
-models
+data/*
+!data/.gitkeep
+models/*
+!models/pothole.pt
 frontend/node_modules
 frontend/dist
-__pycache__
+**/__pycache__
 .pytest_cache
 runs
+*.log
+.DS_Store
+.env

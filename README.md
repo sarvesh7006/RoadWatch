@@ -28,11 +28,11 @@ A GPU is optional. The application uses CPU inference by default. The Bash setup
 
 ## Quick start
 
-Replace `YOUR_GITHUB_USERNAME` and the repository name below with the actual GitHub repository URL.
+Clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/PotholeDetector.git
-cd PotholeDetector
+git clone https://github.com/sarvesh7006/RoadWatch.git
+cd RoadWatch
 ```
 
 ### macOS, Linux, or WSL
@@ -53,11 +53,18 @@ Run only the setup command appropriate for your environment, then start the appl
 bash scripts/start.sh
 ```
 
-Setup creates `.venv`, installs Python and frontend dependencies, downloads and verifies the pretrained model, and builds the dashboard. The first installation can take several minutes because PyTorch is included.
+Setup creates `.venv`, installs Python and frontend dependencies, verifies the included pretrained model checkpoint, and builds the dashboard. The first installation can take a couple of minutes because PyTorch is installed.
 
 ### Windows (PowerShell)
 
-Run these commands from the cloned repository root with Python 3.12 and Node.js installed. Virtual-environment activation is not required:
+With Python 3.12 and Node.js installed, run the automated setup and start scripts:
+
+```powershell
+.\scripts\setup.ps1
+.\scripts\start.ps1
+```
+
+Or execute the steps manually:
 
 ```powershell
 py -3.12 -m venv .venv
@@ -70,7 +77,7 @@ $env:MPLCONFIGDIR = "$PWD/data/matplotlib"
 .\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8011
 ```
 
-For later launches, repeat the two environment-variable assignments and the final Uvicorn command. The remaining command examples in this README use macOS/Linux syntax; on native Windows, replace `.venv/bin/python` with `.\.venv\Scripts\python.exe` and use PowerShell environment-variable syntax.
+For subsequent launches, simply run `.\scripts\start.ps1` (or repeat the environment variable assignments and Uvicorn command).
 
 ### Open the app
 
@@ -79,7 +86,7 @@ For later launches, repeat the two environment-variable assignments and the fina
 
 Keep the server terminal open while using the app. Stop it with `Ctrl+C`.
 
-Model weights, installed dependencies, generated frontend files, and local reports are excluded from Git. Every new clone needs the setup step. `requirements.txt` pins direct Python dependencies; `requirements.lock.txt` records the complete dependency versions from the original development environment, rather than guaranteeing compatibility with every platform. `frontend/package-lock.json` locks frontend dependencies.
+The runtime model checkpoint (`models/pothole.pt`, ~22.5 MB) is committed directly to the repository so you can run inference immediately after setup. Development artifacts, experimental checkpoints, local databases, and generated frontend files are excluded by `.gitignore`. `requirements.txt` pins Python dependencies; `requirements.lock.txt` records environment versions; and `frontend/package-lock.json` locks frontend dependencies.
 
 ## Try your first inspection
 
@@ -248,14 +255,22 @@ JSON detection responses include `detections`, `inference_ms`, `preview`, `repor
 
 ## Configuration
 
+Copy `.env.example` to `.env` to customize local runtime settings:
+
+```bash
+cp .env.example .env
+```
+
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `PORT` | `8011` | Local server port |
-| `MODEL_PATH` | `models/pothole.pt` | Trusted YOLO checkpoint |
-| `YOLO_DEVICE` | `cpu` | `cpu`, `mps`, or CUDA device `0` |
-| `DATA_DIR` | `data/` | SQLite database and evidence images |
-| `DATABASE_URL` | SQLite in data directory | Optional SQLAlchemy PostgreSQL URL |
+| `MODEL_PATH` | `models/pothole.pt` | Path to trained YOLOv8 checkpoint |
+| `YOLO_DEVICE` | `cpu` | `cpu`, `mps` (Apple Silicon), or CUDA device `0` |
+| `DATA_DIR` | `data/` | SQLite database and evidence images directory |
+| `DATABASE_URL` | SQLite in data directory | Optional SQLAlchemy PostgreSQL / PostGIS URL |
 | `YOLO_CONFIG_DIR` | `data/yolo` via start script | Ultralytics runtime settings |
+| `MPLCONFIGDIR` | `data/matplotlib` via start script | Matplotlib cache directory |
+| `RUN_MODEL_TESTS` | `0` | Set to `1` to run real model inference regression tests in pytest |
 
 ## Scope and limitations
 
@@ -269,8 +284,8 @@ Local reports are the implemented repair alerts. Automatic delivery to a real mu
 
 | Problem | What to do |
 | --- | --- |
-| Model unavailable / detection returns 503 | Run `.venv/bin/python scripts/download_model.py` from the repository root. If weights are present, inspect the server log for an inference error. |
-| Port 8011 is already in use | On macOS/Linux, run `PORT=8020 bash scripts/start.sh` and open port 8020. On Windows, change the Uvicorn `--port` argument. Update the Vite proxy when developing. |
+| Model unavailable / detection returns 503 | Run `.venv/bin/python scripts/download_model.py` from the repository root to verify or restore `models/pothole.pt`. If weights are present, inspect the server log for an inference error. |
+| Port 8011 is already in use | On macOS/Linux, run `PORT=8020 bash scripts/start.sh` and open port 8020. On Windows, set `$env:PORT="8020"` and run `.\scripts\start.ps1`. Update the Vite proxy if developing with `npm run dev`. |
 | Dashboard is missing or outdated | Run `npm --prefix frontend ci` and `npm --prefix frontend run build`, then restart the backend and refresh the browser. |
 | Camera or location is unavailable | Use localhost or HTTPS, check browser permissions, and confirm that the device provides the requested capability. Some embedded browsers cannot provide a location fix. Open the app in a regular browser, or enter coordinates manually. You can attach a location to an existing report after detection. |
 | Map tiles do not appear | Map tiles require an internet connection. Reports and coordinates remain stored locally. |
@@ -281,7 +296,7 @@ Local reports are the implemented repair alerts. Automatic delivery to a real mu
 
 Bug reports and pull requests are welcome. When reporting an issue, include your operating system, Python and Node.js versions, reproduction steps, and relevant error output. Use a public or anonymized sample when possible.
 
-For code changes, run the API tests and frontend production build above. Describe the behavior changed and how it was verified. Keep generated reports, model checkpoints, local datasets, and credentials out of commits; the included `.gitignore` excludes the standard runtime directories.
+For code changes, run the API tests and frontend production build above. Describe the behavior changed and how it was verified. Keep generated reports, candidate model checkpoints, local datasets, and credentials out of commits; the included `.gitignore` excludes the standard runtime directories.
 
 ## Licensing and attribution
 
@@ -289,25 +304,22 @@ This repository does not currently include a project-level `LICENSE` file. Befor
 
 ## Publishing this repository
 
-Before the first GitHub push:
+Before pushing:
 
-1. Replace the clone URL placeholder in this README with your repository's actual URL.
-2. Add a project-level `LICENSE` reflecting the permissions you intend to grant and applicable dependency terms.
-3. Include the source, setup scripts, dependency files and lockfiles, `models/.gitkeep`, `data/.gitkeep`, and the attributed sample image.
-4. Review the files being committed. Local databases, report images, downloaded checkpoints, virtual environments, and `node_modules` do not belong in the initial source upload.
-
-The model is downloaded during setup, so it does not need to be uploaded to GitHub or tracked with Git LFS.
+1. Confirm that `models/pothole.pt` (~22.5 MB) is staged. It fits within standard GitHub limits (< 100 MB) without requiring Git LFS.
+2. Verify that local databases (`data/*.db`), user uploads (`data/media/*`), experimental candidate weights, virtual environments (`.venv`), and `.env` credentials remain excluded by `.gitignore`.
+3. Add a project-level `LICENSE` reflecting the permissions you intend to grant.
 
 ## Layout
 
 ```
 backend/app/             FastAPI routes, detector, database
 frontend/src/            React dashboard, Leaflet map, capture UI
-models/pothole.pt        Verified pretrained checkpoint (downloaded)
-data/                   Local SQLite database and report images
-scripts/                Setup, launch, training, RDD conversion, video processing
-tests/                  API and persistence tests
-training/               Dataset configuration template
-examples/               Attributed public test image
+models/pothole.pt        Verified pretrained checkpoint (included in repository)
+data/                    Local SQLite database and report images (generated at runtime)
+scripts/                 Setup, launch, training, RDD conversion, video processing
+tests/                   API and persistence tests
+training/                Dataset configuration template
+examples/                Attributed public test images
 Dockerfile, compose.yaml Optional CPU + PostGIS deployment
 ```

@@ -5,6 +5,11 @@ from sqlalchemy import create_engine, String, Float, Integer, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 ROOT = Path(__file__).resolve().parents[2]
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT / '.env')
+except ImportError:
+    pass
 DATA = Path(os.getenv('DATA_DIR', ROOT / 'data'))
 DATA.mkdir(parents=True, exist_ok=True)
 MEDIA = DATA / 'media'
