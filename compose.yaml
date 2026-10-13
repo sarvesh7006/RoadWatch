@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8011:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://roadwatch:roadwatch@db:5432/roadwatch
+    volumes:
+      - roadwatch-data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: roadwatch
+      POSTGRES_PASSWORD: roadwatch
+      POSTGRES_DB: roadwatch
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roadwatch"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+volumes:
+  roadwatch-data:
+  postgres-data:

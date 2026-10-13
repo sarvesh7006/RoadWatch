@@ -1,0 +1,7 @@
+# Copy this file and point path at your own annotated dataset.
+path: /absolute/path/to/pothole-dataset
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: pothole
